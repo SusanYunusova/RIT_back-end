@@ -1,0 +1,167 @@
+version: '3.7'
+services:
+
+ #    .-'''-.   ___    _   ____..--'   ____     __  
+#   / _     \.'   |  | | |        |   \   \   /  / 
+#  (`' )/`--'|   .'  | | |   .-'  '    \  _. /  '  
+# (_ o _).   .'  '_  | | |.-'.'   /     _( )_ .'   
+#  (_,_). '. '   ( \.-.|    /   _/  ___(_ o _)'    
+# .---.  \  :' (`. _` /|  .'._( )_ |   |(_,_)'     
+# \    `-'  || (_ (_) _).'  (_'o._)|   `-'  /      
+#  \       /  \ /  . \ /|    (_,_)| \      /       
+#   `-...-'    ``-'`-'' |_________|  `-..-' 
+ db:
+    image: mysql:5.7
+    ports:
+      - "23306:3306"
+    restart: always
+    command:  --character-set-server=utf8
+              --collation-server=utf8_unicode_ci
+              --connect-timeout=10
+              --max-connections=1000
+    # volumes:
+    #     - /usr/services/asantapp/mySqlData:/var/lib/mysql
+    #     - /usr/services/asantapp/allData:/usr/services
+    environment:
+        MYSQL_DATABASE: 'user_details'
+        MYSQL_USER: 'user'
+        MYSQL_ROOT_PASSWORD: 'root123'
+    networks:
+      - suzy-network
+
+#eureke-server
+ naming-server:
+    image: susanyunusova/eureka-naming-server:0.0.1
+    ports:
+      - "18761:8761"
+    restart: always
+    networks:
+      - suzy-network
+
+ zuul-api-gateway:
+    image: susanyunusova/zuul-gateway:0.0.2
+    environment:
+      SERVICE_NS_HOST: naming-server
+      SERVICE_NS_PORT: 8761
+    ports:
+      - "18765:8765"
+    restart: always
+    depends_on:
+      - naming-server
+    networks:
+      - suzy-network
+
+
+
+       
+    
+ user-details:
+       image: susanyunusova/user-details:0.0.2
+       ports:
+        - "6868"
+       restart: always
+       environment:
+        SERVICE_NS_HOST: naming-server
+        SERVICE_NS_PORT: 8761
+        SERVICE_DB_PASSWORD: root123
+        SERVICE_DB_HOST: db
+        SERVICE_DB_PORT: 3306
+
+       depends_on:
+         - db
+         - naming-server
+         - zuul-api-gateway
+         - user-roles
+       networks:
+         - suzy-network
+
+       
+    
+ user-roles:
+       image: susanyunusova/user-roles:0.0.2
+       ports:
+        - "5858"
+       restart: always
+       environment:
+        SERVICE_NS_HOST: naming-server
+        SERVICE_NS_PORT: 8761
+        SERVICE_DB_PASSWORD: root123
+        SERVICE_DB_HOST: db
+        SERVICE_DB_PORT: 3306
+
+       depends_on:
+         - db
+         - naming-server
+         - zuul-api-gateway
+       networks:
+         - suzy-network
+
+       
+    
+ loan-confirmation:
+       image: susanyunusova/loan-confirmation:0.0.2
+       ports:
+        - "3838"
+       restart: always
+       environment:
+        SERVICE_NS_HOST: naming-server
+        SERVICE_NS_PORT: 8761
+        SERVICE_DB_PASSWORD: root123
+        SERVICE_DB_HOST: db
+        SERVICE_DB_PORT: 3306
+
+       depends_on:
+         - db
+         - naming-server
+         - zuul-api-gateway
+         - customer-history
+         - simulation
+       networks:
+         - suzy-network
+
+       
+
+ customer-history:
+       image: susanyunusova/customer-history:0.0.3
+       ports:
+        - "4848"
+       restart: always
+       environment:
+        SERVICE_NS_HOST: naming-server
+        SERVICE_NS_PORT: 8761
+        SERVICE_DB_PASSWORD: root123
+        SERVICE_DB_HOST: db
+        SERVICE_DB_PORT: 3306
+
+       depends_on:
+         - db
+         - naming-server
+         - zuul-api-gateway
+       networks:
+         - suzy-network
+
+ 
+ simulation:
+       image: susanyunusova/simulation:0.0.1
+       ports:
+        - "4848"
+       restart: always
+       environment:
+        SERVICE_NS_HOST: naming-server
+        SERVICE_NS_PORT: 8761
+        SERVICE_DB_PASSWORD: root123
+        SERVICE_DB_HOST: db
+        SERVICE_DB_PORT: 3306
+
+       depends_on:
+         - db
+         - naming-server
+         - zuul-api-gateway
+       networks:
+         - suzy-network
+
+       
+
+
+networks:
+ suzy-network:
