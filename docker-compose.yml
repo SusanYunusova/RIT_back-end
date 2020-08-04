@@ -19,9 +19,7 @@ services:
               --collation-server=utf8_unicode_ci
               --connect-timeout=10
               --max-connections=1000
-    # volumes:
-    #     - /usr/services/asantapp/mySqlData:/var/lib/mysql
-    #     - /usr/services/asantapp/allData:/usr/services
+   
     environment:
         MYSQL_DATABASE: 'user_details'
         MYSQL_USER: 'user'
